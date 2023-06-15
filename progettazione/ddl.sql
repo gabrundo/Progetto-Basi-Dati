@@ -64,10 +64,10 @@ create table sostiene (
 	primary key(studente, corso_laurea, codice, data)
 );
 
-crate table propeudicita (
+create table propeudicita (
 	corso_is varchar,
 	codice_is char(3),
 	corso_has varchar,
 	codice_has char(3),
-	primary key(codice_is, codice_is, corso_has, codice_has)
+	primary key(codice_is, codice_has, corso_has, corso_is)
 );

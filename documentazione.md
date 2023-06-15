@@ -54,7 +54,7 @@ Traduzione delle entitità con identificatore interno:
 
 Traduzione delle entità con identificatore esterno:
 
-**insegnamento**(<u>corso_laurea, codice</u>, nome, anno, descrizione, _responsabile_)
+**insegnamento**(<u>corso_laurea, codice</u>, nome, anno, descrizione, _responsabile_*)
 
 **appello**(<u>corso_laurea, codice, data</u>)
 
@@ -95,16 +95,12 @@ create table segretario (
 	nome varchar(50) not null,
 	cognome varchar(50) not null,
 	segreteria varchar references segreteria (indirizzo) on update cascade on delete set null (segreteria)
-	-- se un indirizzo della segreteria è aggiornato allora le modifiche si ripercuotono sui segretari
-	-- invece se un indirizzo della segreteria è cancellato i record riferiti in questa tabella sono settati a null	
 );
 
 create table corso_laurea (
 	nome varchar primary key,
 	tipologia char(10) not null,
 	segreteria varchar references segreteria (indirizzo) on update cascade on delete no action
-	-- se un indirizzo della segreteria è aggiornato allora le modifiche si ripercuotono sulla segreteria che ha definito il corso di laurea
-	-- se un indirizzo della segreteria è cancellato la cancellazione della riga non è propagata
 );
 
 create table studente (
@@ -114,8 +110,6 @@ create table studente (
 	nome varchar(50) not null,
 	cognome varchar(50) not null,
 	corso_laurea varchar references corso_laurea (nome) on update cascade on delete no action
-	-- se un corso di laurea è modificato queste modifiche sono propagate al corso di laurea dello studente
-	-- se un corso di laurea è cancellato allora 
 );
 
 create table insegnamento (
@@ -124,7 +118,7 @@ create table insegnamento (
 	nome varchar not null,
 	anno char(1) not null,
 	descrizione text not null,
-	responsabile varchar not null references docente (mail) on ,
+	responsabile varchar references docente (email) on update cascade on delete no action,
 	primary key(corso_laurea, codice)
 );
 
@@ -154,6 +148,7 @@ crate table propeudicita (
 ```
 
 ### Scelta dei tipi di dato
+
 
 ### Politche di reazione di integrità referenziale
 Per il vincolo di integrità referenziale sulla tabella studente dal momento che è necessario gestire la cancellazione di studenti in tabelle di storico quindi non è possibile applicare politiche diverse rispetto a quella `no action`.
