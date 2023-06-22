@@ -1,7 +1,5 @@
 # Documentazione del progetto
 
-<!-- Documento che contiene le scelte implementative adottate -->
-
 ## Progettazione concettuale
 
 ### Modello ER
@@ -94,7 +92,8 @@ create table segretario (
 	password varchar not null,
 	nome varchar(50) not null,
 	cognome varchar(50) not null,
-	segreteria varchar references segreteria (indirizzo) on update cascade on delete set null (segreteria)
+	segreteria varchar,
+	foreign key (segreteria) references segreteria (indirizzo) on update cascade on delete no action
 );
 
 create table corso_laurea (
@@ -138,17 +137,14 @@ create table sostiene (
 	primary key(studente, corso_laurea, codice, data)
 );
 
-crate table propeudicita (
+create table propedeuticita (
 	corso_is varchar,
 	codice_is char(3),
 	corso_has varchar,
 	codice_has char(3),
-	primary key(codice_is, codice_is, corso_has, codice_has)
+	primary key(codice_is, corso_is, corso_has, codice_has)
 );
 ```
-
-### Scelta dei tipi di dato
-
 
 ### Politche di reazione di integrità referenziale
 Per il vincolo di integrità referenziale sulla tabella studente dal momento che è necessario gestire la cancellazione di studenti in tabelle di storico quindi non è possibile applicare politiche diverse rispetto a quella `no action`.
@@ -156,4 +152,151 @@ Invece per quanto riguarda l'aggiornamento delle informazioni di un corso di lau
 
 Per il vincolo di integrità refernziale della tabella segretario, dal momento che le specifiche non applica particolari restrizioni, decido di propagare le modifiche e annullare le cancellazioni che coinvolgono gli indirizzi della segreteria.
 
-Infine per quanto riguarda il vincolo di integrtità referenziale del corso di laurea decido di propagare le modifiche alle tuple del indirizzo della segreteria e di bloccare le cancellazioni.
+Il vincolo di integrtità referenziale del corso di laurea decido di propagare le modifiche alle tuple del indirizzo della segreteria e di bloccare le cancellazioni.
+
+Infine il vincolo di integrità refernziale della tabella insegnamento decido di propagare le modifiche di un corso di laurea e di impedire le cancellazioni.
+
+## Comportamenti interni alla base di dati
+I seguenti requisiti sono realizzati come un comportamento interno alla base di dati.
+
+### Storico della carriera di uno studente
+La rimozione di uno studente deve spostare le informazioni dello studente e della sua carriera in apposite tabelle di storico.
+
+Come prima cosa è necessario creare apposite tabelle di storico `str_studente` e `str_sostiene`.
+
+```sql
+create table str_studente (
+	matricola char(6) primary key,
+	email varchar not null unique,
+	nome varchar(50) not null,
+	cognome varchar(50) not null,
+	corso_laurea varchar
+);
+
+create table str_sostiene (
+		studente char(6),sel
+	corso_laurea varchar,
+	codice char(3),
+	data date,
+	voto smallint,
+	primary key(studente, corso_laurea, codice, data)
+);
+``` 
+
+Per rendere la base di dati capace di questo introduco un trigger che opera prima delle cancellazioni sulla tabella `studente` e che sposta tutti i record sulle informazioni sostenute dallo studente nelle apposite tabelle di storico.
+
+```sql
+create or replace function str_studente_carriera() returns trigger as $$
+    begin
+        insert into str_studente (matricola, email, nome, cognome, corso_laurea) 
+        values (old.matricola, old.email, old.nome, old.cognome, old.corso_laurea);
+
+        insert into str_sostiene 
+        select *
+        from sostiene
+        where studente = old.matricola;
+
+		delete
+		from sostiene
+		where studente=old.matricola;
+
+        return old;
+    end;
+$$
+language 'plpgsql';
+
+create trigger storico_studente_carriera 
+before delete on studente
+for each row execute function str_studente_carriera();
+```
+
+### Inscrizione consentita ad un esame
+Realizzazione di un trigger che opera prima dell’inserimento di una tupla. Permette l'inserimento se l’esame è previsto da un corso di laurea e tutte le propedeuticità sono rispettate altrimenti lo blocca.
+
+```sql
+create or replace function iscrizione_esami() returns trigger as $$
+	declare 
+		cois propedeuticita.corso_is%type;
+		cdis propedeuticita.codice_is%type;
+	begin
+		perform *
+		from insegnamento 
+		where corso_laurea = new.corso_laurea and codice = new.codice;
+		
+		if found then
+			for cois, cdis in
+				select corso_is, codice_is 
+				from propedeuticita
+				where corso_has = new.corso_laurea and codice_has = new.codice
+		
+			loop 
+				if found then 
+					perform *
+					from sostiene
+					where corso_laurea = cois and codice = cdis 
+						and studente = new.studente and voto > 17 and data < new.data;
+
+					if not found then
+						raise info 'Inserimento non valido, propedeuticità non rispettate!';
+						return null;
+					end if;
+				end if;
+			end loop;
+		else
+			raise info 'Inserimento non valido, insegnamento non registrato!';
+			return null;
+		end if;
+
+		return new;
+end;
+$$ language 'plpgsql';
+
+create trigger gestione_iscrizione_esami
+before insert on sostiene
+for each row execute function iscrizione_esami();
+```
+
+Inizialmente la procedura controlla se il codice e il corso di laurea fanno parte del corso di laurea presenti, poi controlla le propedeuticità.
+Se non sono presenti tutte le propedeuticità con voto sufficiente permette blocca l'inserimento sollevando un messaggio di errore altrimenti permette l'inserimento dell'esame.
+
+### Gestione data appelli esami
+Non è possibile avere due appelli per esami dello stesso anno nello stesso giorno.
+
+Per realizzare questo comportamento all'interno della base di dati realizzo un trigger che opera prima dell'inserimento nella tabella `appello`.
+Per recuperare l'anno dell'insegnamento devo fare un join con la tabella `insegnamento` per trovare l'anno del corso di laurea in cui è erogato.
+Se esistono appelli dello stesso anno con la stessa data devo bloccare la possibilità di inserimento altrimenti può essere inserito.
+
+```sql
+create or replace function appelli_esami() returns trigger as $$
+	declare
+		anno_esame insegnamento.anno%type;
+	begin
+		select i.anno into anno_esame 
+		from appello a inner join insegnamento i on a.corso_laurea = i.corso_laurea and a.codice = i.codice
+		where a.corso_laurea = new.corso_laurea and a.codice = new.codice;
+		
+		perform *
+		from insegnamento i inner join appello a on a.corso_laurea = i.corso_laurea and a.codice = i.codice
+		where i.corso_laurea = new.corso_laurea and i.anno = anno_esame and data = new.data;
+		
+		if found then
+			raise info 'Impossibile inserire registrare il nuovo appello per una sovrapposizione!';
+			return null;
+		else
+			return new;
+		end if;
+	end;
+$$ language 'plpgsql';
+
+create trigger gestione_appelli_esami 
+before insert on appello
+for each row execute function appelli_esami();
+```
+
+### Produzione carriera completa di uno studente
+
+### Produzione carriera valida di uno studente
+
+```sql
+
+```
