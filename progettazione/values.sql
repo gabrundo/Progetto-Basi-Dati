@@ -61,3 +61,10 @@ insert into appello (corso_laurea, codice, data) values
 
 insert into sostiene (studente, corso_laurea, codice, data, voto) values 
 ('789012', 'Informatica', '003', '2023-07-03', 20);
+
+-- inserimenti per controllo sul numero di insegnamenti gestiti da un professore
+insert into insegnamento (corso_laurea, codice, nome, anno, descrizione, responsabile) values 
+('Informatica', '004', 'Logica Matematica', '1', 'Introduzione alla logica matematica', 'giulia.verdi@example.com');
+
+insert into insegnamento (corso_laurea, codice, nome, anno, descrizione, responsabile) values
+('Informatica', '005', 'Matematica del Discreto', '1', 'Corso introduttivo di algebra lineare', 'giulia.verdi@example.com');

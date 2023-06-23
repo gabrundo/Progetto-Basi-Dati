@@ -18,7 +18,7 @@ Inoltre l'entità segreteria è responsabile, come richiesto dalla specifiche di
 Infine la gerarchia utente, studente, docente e segretario ha come scopo quello di rappresentare le caratteristiche in comune alle tre entità che sono `email, nome, cognome e password`. La mail e la password servono per l'accesso e nome e cognome per descrivere l'utente.
 La tipologia di gerarichia è totale ed esclusciva, $(T, E)$ perché dato ogni utente esso apparitene ad una e una sola delle classi figlie.
 
-### Vincoli extra schema
+#### Vincoli extra schema
 L'attributo `anno` appartiene ad $\{1, 2, 3 \}$ se `tipologia` = _triennale_.
 Invece `anno` appartiene ad $\{1, 2 \}$ se `tipologia` = _magistrale_.
 
@@ -156,6 +156,23 @@ Il vincolo di integrtità referenziale del corso di laurea decido di propagare l
 
 Infine il vincolo di integrità refernziale della tabella insegnamento decido di propagare le modifiche di un corso di laurea e di impedire le cancellazioni.
 
+### Controllo sul numero massimo di insegnamenti gestiti da docenti
+Come richiesto dalle specifiche il numero massimo di insegnamenti gestiti da un docente è 3.
+Per controllare che questo vincolo ssia rispetto realizzo un trigger che si occupa di controllare che dopo l'inserimento di un insegnamento il numero di insegnamenti gestiti da un docente sia minore o uguale a 3.
+
+```sql
+
+```
+
+### Controllo anno insegnamenti rispetto alla sua tipologia
+Come specificato nei vincoli extra schema del modello relazionale deve valere il seguente vincoli.
+L'attributo `anno` di un insegnamento appartiene ad $\{1, 2, 3 \}$ se `tipologia` = _triennale_.
+Invece `anno` appartiene ad $\{1, 2 \}$ se `tipologia` = _magistrale_.
+
+```sql
+
+```
+
 ## Comportamenti interni alla base di dati
 I seguenti requisiti sono realizzati come un comportamento interno alla base di dati.
 
@@ -174,7 +191,7 @@ create table str_studente (
 );
 
 create table str_sostiene (
-		studente char(6),sel
+	studente char(6),
 	corso_laurea varchar,
 	codice char(3),
 	data date,
@@ -293,10 +310,66 @@ before insert on appello
 for each row execute function appelli_esami();
 ```
 
-### Produzione carriera completa di uno studente
-
-### Produzione carriera valida di uno studente
+### Produzione carriera completa di uno studente iscritto
+Per avere la `carriera_completa` di uno studente decido di realizzare una vista con tutte le infomrazioni riguardo la carriera di uno studente recuperando informazioni da `insegnamento`, `appello`, `sostiente`.
 
 ```sql
+create or replace view carriera_completa as (
+	select s.studente, i.nome, a.corso_laurea, i.anno, a.data, s.voto
+	from appello a inner join sostiene s on a.corso_laurea = s.corso_laurea and a.codice = s.codice and a.data = s.data
+		inner join insegnamento i on a.corso_laurea = i.corso_laurea and a.codice = i.codice
+	order by anno asc
+);
+```
 
+### Produzione carriera valida di uno studente iscritto
+In modo analogo al precedente per ottenere la carriera valida realizzo una vista `carriera_valida` che contiene solo la descrizione degli esami sufficienti e con la data più recente.
+
+```sql
+create or replace view carriera_valida as (
+	with esami_recenti as (
+		select studente, nome, corso_laurea, anno, max(data) as data_recente
+		from carriera_completa
+		where voto > 17
+		group by studente, nome, corso_laurea, anno
+	)
+	select e.studente, e.nome, e.corso_laurea, e.anno, e.data_recente, c.voto
+	from esami_recenti e inner join carriera_completa c on e.studente = c.studente and e.nome = c.nome and e.corso_laurea = c.corso_laurea and e.data_recente = c.data
+);
+```
+
+### Informazioni complete di un corso di laurea
+Per recupeare le infomrazioni rigurado un corso di laurea servono anche tutte le infromazioni riguardo gli insegnamenti di quel corso di laurea.
+Per rappresentare queste informazioni ho scelto di realizzare una funzione che prende in input il nome di un corso di laurea e restituisce tutte le informazioni ad esso riguardanti.
+
+```sql
+create or replace function descrizione_corso_laurea(varchar) returns text as $$
+	declare
+		descrizione text = '';
+		corso corso_laurea%rowtype;
+		ins insegnamento%rowtype;
+	begin
+		select * into corso
+		from corso_laurea
+		where trim(lower(nome)) = trim(lower($1));
+
+		if not found then
+			descrizione = 'Nome del cordo non trovato!';
+		else 
+			descrizione = descrizione || 'Nome corso di laurea: ' || corso.nome 
+				|| ', tipologia: ' || corso.tipologia || ', facoltà: ' || corso.segreteria || E'\n';
+			for ins in 
+				select *
+				from insegnamento
+				where trim(lower(nome)) = trim(lower($1))
+				order by anno asc
+			loop
+				descrizione = descrizione || 'nome esame: ' || ins.nome 
+					|| ', anno di erogazione : ' || ins.anno  || ', descrizione: ' || ins.descrizione
+					|| ', responsabile: ' || ins.responsabile || E'\n';
+			end loop; 
+		end if;
+		return descrizione;
+	end;
+$$ language 'plpgsql';
 ```
