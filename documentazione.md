@@ -170,7 +170,35 @@ L'attributo `anno` di un insegnamento appartiene ad $\{1, 2, 3 \}$ se `tipologia
 Invece `anno` appartiene ad $\{1, 2 \}$ se `tipologia` = _magistrale_.
 
 ```sql
+create or replace function anno_insegnamento() returns trigger as $$
+	declare 
+		tipo corso_laurea.tipologia%type;
+	begin 
+		select tipologia into tipo
+		from corso_laurea
+		where nome = new.corso_laurea;
 
+		if tipo = '%triennale%' then
+				if not (new.anno = '1' or new.anno = '2' or new.anno = '3') then
+						raise info 'Inserimento del insegnamento % non valido!', new.nome;
+						return null;
+				end if;
+		elsif tipo = '%magistrale%' then
+				if not (new.anno = '1' or new.anno = '2') then
+						raise info 'Inserimento del insegnamento % non valido!', new.nome;
+						return null;
+				end if;
+		else
+				raise info 'Inserimento del insegnamento % non valido!', new.nome;
+				return null;
+		end if;
+		return new;
+	end;
+$$ language 'plpgsql';
+
+create trigger gestione_anni_insegnamento 
+before insert on insegnamento
+for each row execute function anno_insegnamento();
 ```
 
 ## Comportamenti interni alla base di dati

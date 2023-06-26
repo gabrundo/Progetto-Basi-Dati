@@ -68,3 +68,7 @@ insert into insegnamento (corso_laurea, codice, nome, anno, descrizione, respons
 
 insert into insegnamento (corso_laurea, codice, nome, anno, descrizione, responsabile) values
 ('Informatica', '005', 'Matematica del Discreto', '1', 'Corso introduttivo di algebra lineare', 'giulia.verdi@example.com');
+
+-- inserimento per controllo dell'anno di un insegnamento di un corso di laurea
+insert into insegnamento (corso_laurea, codice, nome, anno, descrizione, responsabile) values 
+('Informatica', '005', 'Corso errato', '4', 'Descrizione di un corso errato', 'mario.rossi@example.com');
