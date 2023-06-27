@@ -158,14 +158,35 @@ Infine il vincolo di integrità refernziale della tabella insegnamento decido di
 
 ### Controllo sul numero massimo di insegnamenti gestiti da docenti
 Come richiesto dalle specifiche il numero massimo di insegnamenti gestiti da un docente è 3.
-Per controllare che questo vincolo ssia rispetto realizzo un trigger che si occupa di controllare che dopo l'inserimento di un insegnamento il numero di insegnamenti gestiti da un docente sia minore o uguale a 3.
+
+Per controllare che questo vincolo sia rispetto realizzo un trigger che si occupa di controllare che dopo l'inserimento di un insegnamento il numero di insegnamenti gestiti da un docente sia minore o uguale a 3.
 
 ```sql
+create or replace function numero_insegnamenti_docente() returns trigger as $$
+	declare
+		resp insegnamento.responsabile%type;
+		numero numeric;
+	begin
+		select responsabile, count(*) into resp, numero
+		from insegnamento
+		group by responsabile
+		having count(*) > 3;
 
+		if found then
+			raise info 'Il docente, con identificativo %, non può gestire altri corsi!', resp;
+			delete from insegnamento where corso_laurea = new.corso_laurea and codice = new.codice;
+		end if;
+		return null;
+	end;
+$$ language 'plpgsql';
+
+create trigger gestione_numero_insegnamenti_docente 
+after insert on insegnamento
+for each row execute function numero_insegnamenti_docente();
 ```
 
 ### Controllo anno insegnamenti rispetto alla sua tipologia
-Come specificato nei vincoli extra schema del modello relazionale deve valere il seguente vincoli.
+Come richiesto dalla vincoli extra schema del modello relazionale l'anno di un insegnamento deve rispettare le restrizioni richieste dalla tipologia del corso di laurea.
 L'attributo `anno` di un insegnamento appartiene ad $\{1, 2, 3 \}$ se `tipologia` = _triennale_.
 Invece `anno` appartiene ad $\{1, 2 \}$ se `tipologia` = _magistrale_.
 
@@ -207,7 +228,7 @@ I seguenti requisiti sono realizzati come un comportamento interno alla base di 
 ### Storico della carriera di uno studente
 La rimozione di uno studente deve spostare le informazioni dello studente e della sua carriera in apposite tabelle di storico.
 
-Come prima cosa è necessario creare apposite tabelle di storico `str_studente` e `str_sostiene`.
+Come prima cosa è necessario creare apposite tabelle di storico `str_studente` e `str_sostiene` con il seguente schema.
 
 ```sql
 create table str_studente (
@@ -228,7 +249,7 @@ create table str_sostiene (
 );
 ``` 
 
-Per rendere la base di dati capace di questo introduco un trigger che opera prima delle cancellazioni sulla tabella `studente` e che sposta tutti i record sulle informazioni sostenute dallo studente nelle apposite tabelle di storico.
+Per rendere la base di dati capace di questo comportamento introduco un trigger che opera prima delle cancellazioni sulla tabella `studente` e che sposta tutti i record sulle informazioni sostenute dallo studente nelle apposite tabelle di storico.
 
 ```sql
 create or replace function str_studente_carriera() returns trigger as $$
@@ -256,7 +277,10 @@ for each row execute function str_studente_carriera();
 ```
 
 ### Inscrizione consentita ad un esame
-Realizzazione di un trigger che opera prima dell’inserimento di una tupla. Permette l'inserimento se l’esame è previsto da un corso di laurea e tutte le propedeuticità sono rispettate altrimenti lo blocca.
+Uno studente può iscriversi ad un esame solo se privisto dal suo corso di laurea e le propedeudicità sono rispettate.
+Per rendere la base di dati capace di questo comportamento realizzo un trigger che opera prima dell’inserimento di una tupla sulla tabella `sostiene`. 
+
+Il trigger permette l'inserimento di un esame, ovvero l'iscrizione ad un appello, se è previsto da un corso di laurea e tutte le propedeuticità sono già superate dallo studente.
 
 ```sql
 create or replace function iscrizione_esami() returns trigger as $$
@@ -400,4 +424,35 @@ create or replace function descrizione_corso_laurea(varchar) returns text as $$
 		return descrizione;
 	end;
 $$ language 'plpgsql';
+```
+
+### Produzione della carriera valida di ogni studente dalla segreteria
+Per rendere la base di dati capace di produrre la carriera valido di ogni studente presente o rimosso realizzo una vista `carriera_valida_completa` per avere tutti gli esami di tutti gli studanti.
+La struttura della query è simile a quella fatta per la produzione della carriera degli studenti recolarmenete iscritti con la differenza che è necessario aggiungere anche gli studenti e gli esami svolti nella tabella `str_sostiene`.
+
+```sql
+create view carriera_completa_globale as (
+	with sostiene_globale as (
+		select * from sostiene
+		union
+		select * from str_sostiene
+	)
+	select s.studente, i.nome, a.corso_laurea, i.anno, a.data, s.voto
+	from appello a 
+		inner join sostiene_globale s on a.corso_laurea = s.corso_laurea and a.codice = s.codice and a.data = s.data
+		inner join insegnamento i on a.corso_laurea = i.corso_laurea and a.codice = i.codice
+	);
+```
+
+```sql
+create or replace view carriera_valida_globale as (
+	with esami_recenti_globali as (
+		select studente, nome, corso_laurea, anno, max(data) as data_recente
+		from carriera_completa_globale
+		where voto > 17
+		group by studente, nome, corso_laurea, anno
+	)
+	select e.studente, e.nome, e.corso_laurea, e.anno, e.data_recente, c.voto
+	from esami_recenti_globali e inner join carriera_completa_globale c on e.studente = c.studente and e.nome = c.nome and e.corso_laurea = c.corso_laurea and e.data_recente = c.data
+);
 ```
