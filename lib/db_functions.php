@@ -15,20 +15,36 @@
         return pg_close($db);
     }
 
-    function login_studente($user, $psw) {
+    function login_utente($email, $psw, $usertype) {
         $logged = null;
+        $user = null;
         $db = open_pg_connection();
         $path = "SET search_path=uni;";
-        $sql = "SELECT email FROM studente WHERE email = $1 and password = $2";
+
+        switch ($usertype) {
+            case "st": 
+                $user = "studente";
+                break;
+            case "dc": 
+                $user = "docente";
+                break;
+            case "sg": 
+                $user = "segretario";
+                break;
+            default:
+                return false;
+        }
+
+        $sql = "SELECT email FROM ".$user." WHERE email = $1 and password = $2";
         $params = array(
-            $user,
+            $email,
             md5($psw)
         );
 
         pg_exec($db, $path);
 
-        $result = pg_prepare($db, "check_studente", $sql);
-        $result = pg_execute($db, "check_studente", $params);
+        $result = pg_prepare($db, "check", $sql);
+        $result = pg_execute($db, "check", $params);
 
         if($row = pg_fetch_assoc($result)) {
             $logged = $row['email'];
