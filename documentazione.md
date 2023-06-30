@@ -173,7 +173,7 @@ create or replace function numero_insegnamenti_docente() returns trigger as $$
 		having count(*) > 3;
 
 		if found then
-			raise info 'Il docente, con identificativo %, non può gestire altri corsi!', resp;
+			raise exception 'Il docente, con identificativo %, non può gestire altri corsi!', resp;
 			delete from insegnamento where corso_laurea = new.corso_laurea and codice = new.codice;
 		end if;
 		return null;
@@ -201,16 +201,16 @@ create or replace function anno_insegnamento() returns trigger as $$
 
 		if tipo = '%triennale%' then
 				if not (new.anno = '1' or new.anno = '2' or new.anno = '3') then
-						raise info 'Inserimento del insegnamento % non valido!', new.nome;
+						raise exception 'Inserimento del insegnamento % non valido!', new.nome;
 						return null;
 				end if;
 		elsif tipo = '%magistrale%' then
 				if not (new.anno = '1' or new.anno = '2') then
-						raise info 'Inserimento del insegnamento % non valido!', new.nome;
+						raise exception 'Inserimento del insegnamento % non valido!', new.nome;
 						return null;
 				end if;
 		else
-				raise info 'Inserimento del insegnamento % non valido!', new.nome;
+				raise exception 'Inserimento del insegnamento % non valido!', new.nome;
 				return null;
 		end if;
 		return new;
@@ -306,13 +306,13 @@ create or replace function iscrizione_esami() returns trigger as $$
 						and studente = new.studente and voto > 17 and data < new.data;
 
 					if not found then
-						raise info 'Inserimento non valido, propedeuticità non rispettate!';
+						raise exception 'Propedeuticità non rispettate per il corso %', cois;
 						return null;
 					end if;
 				end if;
 			end loop;
 		else
-			raise info 'Inserimento non valido, insegnamento non registrato!';
+			raise info 'Insegnamento % non registrato', cois;
 			return null;
 		end if;
 
@@ -349,7 +349,7 @@ create or replace function appelli_esami() returns trigger as $$
 		where i.corso_laurea = new.corso_laurea and i.anno = anno_esame and data = new.data;
 		
 		if found then
-			raise info 'Impossibile inserire registrare il nuovo appello per una sovrapposizione!';
+			raise exception 'Impossibile inserire appello per una sovrapposizione';
 			return null;
 		else
 			return new;
@@ -406,7 +406,7 @@ create or replace function descrizione_corso_laurea(varchar) returns text as $$
 		where trim(lower(nome)) = trim(lower($1));
 
 		if not found then
-			descrizione = 'Nome del cordo non trovato!';
+			raise exception 'Nome del corso non trovato';
 		else 
 			descrizione = descrizione || 'Nome corso di laurea: ' || corso.nome 
 				|| ', tipologia: ' || corso.tipologia || ', facoltà: ' || corso.segreteria || E'\n';
