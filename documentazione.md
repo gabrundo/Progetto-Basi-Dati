@@ -456,3 +456,22 @@ create or replace view carriera_valida_globale as (
 	from esami_recenti_globali e inner join carriera_completa_globale c on e.studente = c.studente and e.nome = c.nome and e.corso_laurea = c.corso_laurea and e.data_recente = c.data
 );
 ```
+
+## Comportamenti applicazione web
+
+### Note sviluppo applicazione web
+Ho scelto di non fattorizzare il codice in comune per visualizzazione delle informazioni e modifica della password perché la funzione `pg_prepare` non si comporta bene se fisso passo come parametro il nome della tabella.
+Ho fatto un eccezzione concatenando il nome della tabella al resto della query per quanto riguarda questa porzione del codice per il login dell'utente anche se questa modifica comporta un perdita di sicuerezza perché il valore della tabelle può essere modificato e rischiare di compromettere la struttura del database.
+
+```php
+	$sql = "SELECT email FROM ".$user." WHERE email = $1 and password = $2";
+	$params = array(
+		$email,
+		md5($psw)
+	);
+
+	pg_exec($db, $path);
+
+	$result = pg_prepare($db, "check", $sql);
+	$result = pg_execute($db, "check", $params);
+```

@@ -1,22 +1,19 @@
 <?php
     ini_set("display_errors", "On");
 	ini_set("error_reporting", E_ALL);
-	include_once('lib/db_functions.php');
+	include_once('lib/st_functions.php');
 
 	session_start();
 
-	$psw_change = false;
 	$error_msg = "";
     $logged = null;
-	$student = array();
     $logout_link = $_SERVER['PHP_SELF']."?log=del";
-	$path = "SET search_path=uni;";
-
-	$db = open_pg_connection();
-	pg_exec($db, $path);
+	$psw_change = false;
+	$student = array();
 
     if(isset($_SESSION['email'])) {
 		$logged = $_SESSION['email'];
+		$student = get_student_information($logged);
 	}
 
     if(isset($_GET) && isset($_GET['log']) && $_GET['log'] == 'del') {
@@ -28,66 +25,15 @@
 		exit();
 	}
 
-	if(isset($logged)) {
-		$sql = "SELECT matricola, nome, cognome, corso_laurea 
-			FROM studente
-			WHERE email = $1";
-		$params = array($logged);
-
-		$result = pg_prepare($db, "student_description", $sql);
-		$result = pg_execute($db, "student_description", $params);
-
-		if($result) {
-			while($row = pg_fetch_assoc($result)) {
-				$student = array(
-					$row['matricola'],
-					$row['nome'],
-					$row['cognome'],
-					$row['corso_laurea']
-				);
-			}
-		}
-	}
-
 	if(isset($logged) && isset($_POST['oldpsw']) && isset($_POST['newpsw'])) {
-		$sql_confirm = "SELECT *
-			FROM studente
-			WHERE password = $1 and email = $2;";
-		$sql_insert = "UPDATE studente SET password = $1 WHERE email = $2;";
+		$s = change_student_password($logged, $_POST['oldpsw'], $_POST['newpsw']);
 
-		$params_confim = array(
-			md5($_POST['oldpsw']), $logged
-		);
+		$error_msg = $s[1];
+		$psw_change = $s[0];
 
-		$result_confirm = pg_prepare($db, "confirm_identity", $sql_confirm);
-		$result_confirm = pg_execute($db, "confirm_identity", $params_confim);
-
-		if($result_confirm) {
-			$row = pg_fetch_assoc($result_confirm);
-			if(!$row) 
-				$error_msg = "Cambiamento della password non riuscito";
-			else {
-				$params_insert = array(
-					md5($_POST['newpsw']), $logged
-				);
-	
-				$result_insert = pg_prepare($db, "insert_psw", $sql_insert);
-				$result_insert = pg_execute($db, "insert_psw", $params_insert);
-	
-				if($result_insert) {
-					$psw_change = true;
-				} else {
-					$error_msg = "Cambiamento della password non riuscito";
-				}
-			}
-		}
-
-		echo $error_msg;
 		$_POST['oldpws'] = null;
 		$_POST['newpsw'] = null;
 	}
-
-	close_pg_connection($db);
 ?>
 
 <!doctype html>
@@ -144,7 +90,7 @@
 			</div>
 			<?php if(!$psw_change) { ?>
 				<div class="container mt-5">
-					<h3 class="text-center">Cambiare la password del utente</h3>
+					<h3 class="text-center">Cambiare la password dello studente</h3>
 					<form action="" method="post">
 						<div class="row g-3 mb-3">
 							<div class="col">
