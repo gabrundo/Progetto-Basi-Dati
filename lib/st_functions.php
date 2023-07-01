@@ -79,4 +79,32 @@
         close_pg_connection($db);
         return $result;
     }
+
+    function get_student_valid_carrear($matricola) {
+        $exams = array();
+        $path = "SET search_path=uni;";
+        $params = array($matricola);
+        $sql = "SELECT * FROM carriera_valida WHERE studente = $1;";
+
+        $db = open_pg_connection();
+        pg_query($db, $path);
+
+        $result = pg_prepare($db, "valid_carrear", $sql);
+        $result = pg_execute($db, "valid_carrear", $params);
+
+        if($result) {
+            while($row = pg_fetch_assoc($result)) {
+                $name = $row['nome'];
+                $course = $row['corso_laurea'];
+                $year = $row['anno'];
+                $date = $row['data_recente'];
+                $grade = $row['voto'];
+
+                array_push($exams, array($name, $course, $year, $date, $grade));
+            }
+        }
+
+        close_pg_connection($db);
+        return $exams;
+    }
 ?>

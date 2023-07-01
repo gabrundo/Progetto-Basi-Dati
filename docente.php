@@ -46,7 +46,7 @@
 </head>
 <body>
 	<div class="container-xl mt-5 border-bottom">
-		<h1 class="pb-2 border-bottom text-center">Pagina principale del docente</h1>
+		<h1 class="pb-2 border-bottom text-center">Portale del docente</h1>
 		<?php if(isset($logged)) { ?>
 			<div class="container mt-5">
 				<div class="alert alert-success text-center border" role="alert">
