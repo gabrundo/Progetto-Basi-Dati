@@ -464,14 +464,52 @@ Ho scelto di non fattorizzare il codice in comune per visualizzazione delle info
 Ho fatto un eccezzione concatenando il nome della tabella al resto della query per quanto riguarda questa porzione del codice per il login dell'utente anche se questa modifica comporta un perdita di sicuerezza perché il valore della tabelle può essere modificato e rischiare di compromettere la struttura del database.
 
 ```php
-	$sql = "SELECT email FROM ".$user." WHERE email = $1 and password = $2";
-	$params = array(
-		$email,
-		md5($psw)
-	);
+$sql = "SELECT email FROM ".$user." WHERE email = $1 and password = $2";
+$params = array(
+	$email,
+	md5($psw)
+);
 
-	pg_exec($db, $path);
+pg_exec($db, $path);
 
-	$result = pg_prepare($db, "check", $sql);
-	$result = pg_execute($db, "check", $params);
+$result = pg_prepare($db, "check", $sql);
+$result = pg_execute($db, "check", $params);
+```
+
+Per permettere allo studente al posto di offrire un form con tre campi `input` per il corso di laurea, nome dell'insegnamento e data dell'appello ho scelto di recuparare dal database gli insegnamenti a cui lo studente può iscriversi e selezionarli tramite una tabella selezionano dei `input type="hidden"`.
+
+```php
+<form action="" method="post">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th class="col">Corso di laurea</th>
+                <th class="col">Nome insegnamento</th>
+                <th class="col">Data appello</th>
+                <th class="col">Selezione appello</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach($session as $values) {?>
+                <tr>
+                    <td>
+                        <input type="hidden" name="corso" value="<?php echo $values[0];?>">
+                        <?php echo $values[0]; ?>
+                    </td>
+                    <td>
+                        <input type="hidden" name="codice" value="<?php echo $values[3];?>">
+                        <?php echo $values[1]; ?>
+                    </td>
+                    <td>
+                        <input type="hidden" name="data" value="<?php echo $values[2];?>">
+                        <?php echo $values[2]; ?>
+                    </td>
+                    <td>
+                        <button type="submit" class="btn btn-primary">Iscrizione</button>
+                    </td>
+                </tr>
+            <?php } ?>
+        </tbody>
+    </table>
+</form>
 ```
