@@ -55,7 +55,7 @@
 			<div class="navbar-nav">
 				<a class="nav-link active" aria-current="page" href="studente.php">Home</a>
 				<a class="nav-link" href="carriera.php">Carriera</a>
-				<a class="nav-link" href="#">Iscrizione esami</a>
+				<a class="nav-link" href="iscrizione_esami.php">Iscrizione esami</a>
 			</div>
 			</div>
 		</div>
@@ -124,17 +124,16 @@
 				</div>
 				<?php if(!empty($error_msg)) { ?>
 					<div class="alert alert-warning mt-5 text-center" role="alert">
-                		<p> <?php echo $error_msg; ?> </p>
+                		<p><?php echo $error_msg; ?></p>
             		</div>
 				<?php } ?>
-				<?php } else { ?>
-					<div class="container mt-5">
-					<div class="alert alert-success text-center border" role="alert">
-					<p>
-						<?php echo("Password cambiata con successo");?>
-					</p>
+			<?php } else { ?>
+				<div class="container mt-5">
+					<div class="alert alert-success text-center" role="alert">
+						<p><?php echo("Password cambiata con successo");?></p>
 					</div>
-				<?php }?>
+				</div>
+			<?php }?>
 		<?php } ?>
 	</div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>

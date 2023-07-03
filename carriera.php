@@ -47,7 +47,7 @@
             <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
             <div class="navbar-nav">
                 <a class="nav-link active" aria-current="page" href="studente.php">Home</a>
-                <a class="nav-link" href="#">Iscrizione esami</a>
+                <a class="nav-link" href="iscrizione_esami.php">Iscrizione esami</a>
             </div>
             </div>
         </div>

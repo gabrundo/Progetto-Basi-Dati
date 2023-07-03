@@ -107,4 +107,83 @@
         close_pg_connection($db);
         return $exams;
     }
+
+    function get_session($course) {
+        $current_date = "2023-07-05";
+        $path = "set search_path=uni;";
+        $params = array($current_date, $course);
+        $session = array();
+        $sql = "SELECT a.corso_laurea, i.nome, a.codice, a.data
+            FROM appello a INNER JOIN insegnamento i ON a.corso_laurea = i.corso_laurea AND a.codice = i.codice
+            WHERE a.data > $1 and a.corso_laurea = $2;";
+
+        $db = open_pg_connection();
+        pg_query($db, $path);
+
+        $result = pg_prepare($db, "session", $sql);
+        $result = pg_execute($db, "session", $params);
+
+        if($result) {
+            while($row = pg_fetch_assoc($result)) {
+                $corso = $row['corso_laurea'];
+                $name = $row['nome'];
+                $codice = $row['codice'];
+                $data = $row['data'];
+
+                array_push($session, array($corso, $name, $data, $codice));
+            }
+        }
+
+        close_pg_connection($db);
+        return $session;
+    }
+
+    function exam_subscription($matricola, $corso, $codice, $data) {
+        $error_msg = '';
+        $path = "SET search_path=uni;";
+        $params = array($matricola, $corso, $codice, $data);
+        $sql = "INSERT INTO sostiene (studente, corso_laurea, codice, data, voto) 
+            VALUES ($1, $2, $3, $4, null);";
+        
+        $db = open_pg_connection();
+        pg_query($db, $path);
+
+        $result = pg_prepare($db, "insert_new_exam", $sql);
+        $result = pg_execute($db, "insert_new_exam", $params);
+
+        if(!$result) {
+            $error_msg = pg_last_error($db);
+        }
+
+        close_pg_connection($db);
+        return $error_msg;
+    }
+
+    function get_student_exam_subscriptions($matricola) {
+        $path = "SET search_path=uni;";
+        $params = array($matricola);
+        $sql = "SELECT s.corso_laurea, i.nome, s.data
+            FROM sostiene s INNER JOIN insegnamento i ON s.corso_laurea = i.corso_laurea AND s.codice = i.codice
+            WHERE s.studente = $1 AND voto IS NULL;";
+        $exam_subscriptions = array();
+
+        $db = open_pg_connection();
+        pg_query($db, $path);
+
+        $result = pg_prepare($db, "", $sql);
+        $result = pg_execute($db, "", $params);
+
+        if($result) {
+            while($row = pg_fetch_assoc($result)) {
+                $corso = $row['corso_laurea'];
+                $nome = $row['nome'];
+                $data = $row['data'];
+
+                array_push($exam_subscriptions, array($corso, $nome, $data));
+            }
+        }
+
+        close_pg_connection($db);
+        return $exam_subscriptions;
+    }
 ?>
