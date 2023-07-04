@@ -125,7 +125,8 @@ create table appello (
 	corso_laurea varchar,
 	codice char(3),
 	data date,
-	primary key(corso_laurea, codice, data)
+	primary key(corso_laurea, codice, data),
+	foreign key(corso_laurea, cocide) references insegnamento (corso_laurea, codice)
 );
 
 create table sostiene (
@@ -134,7 +135,8 @@ create table sostiene (
 	codice char(3),
 	data date,
 	voto smallint,
-	primary key(studente, corso_laurea, codice, data)
+	primary key(studente, corso_laurea, codice, data),
+	foreign key(corso_laurea, cocide) references insegnamento (corso_laurea, codice)
 );
 
 create table propedeuticita (
@@ -142,7 +144,9 @@ create table propedeuticita (
 	codice_is char(3),
 	corso_has varchar,
 	codice_has char(3),
-	primary key(codice_is, corso_is, corso_has, codice_has)
+	primary key(codice_is, corso_is, corso_has, codice_has),
+	foreign key (corso_is, codice_is) references insegnamento (corso_laurea, codice),
+	foreign key (corso_has, codice_has) references insegnamento (corso_laurea, codice)
 );
 ```
 
@@ -340,9 +344,9 @@ create or replace function appelli_esami() returns trigger as $$
 	declare
 		anno_esame insegnamento.anno%type;
 	begin
-		select i.anno into anno_esame 
-		from appello a inner join insegnamento i on a.corso_laurea = i.corso_laurea and a.codice = i.codice
-		where a.corso_laurea = new.corso_laurea and a.codice = new.codice;
+		select anno into anno_esame
+		from insegnamento
+		where corso_laurea = new.corso_laurea and codice = new.codice;
 		
 		perform *
 		from insegnamento i inner join appello a on a.corso_laurea = i.corso_laurea and a.codice = i.codice

@@ -77,4 +77,87 @@
         close_pg_connection($db);
         return $result;
     }
+
+    function get_teacher_teachings($email) {
+        $path = "SET search_path=uni;";
+        $params = array($email);
+        $sql = "SELECT corso_laurea, codice, nome, anno, descrizione
+            FROM insegnamento
+            WHERE responsabile = $1;";
+        $teachings = array();
+
+        $db = open_pg_connection();
+        pg_query($db, $path);
+
+        $result = pg_prepare($db, "techings_desc", $sql);
+        $result = pg_execute($db, "techings_desc", $params);
+
+        if($result) {
+            while($row = pg_fetch_assoc($result)) {
+                $corso = $row['corso_laurea'];
+                $codice = $row['codice'];
+                $nome = $row['nome'];
+                $anno = $row['anno'];
+                $descrizione = $row['descrizione'];
+
+                array_push($teachings, array($corso, $codice, $nome, $anno, $descrizione));
+            }
+        }
+
+        close_pg_connection($db);
+        return $teachings;
+    }
+
+    function add_date_appeal($email, $corso, $codice, $data) {
+        $error_msg = '';
+        $path = "SET search_path=uni;";
+        $params_check = array($corso, $codice, $email);
+        $sql_check = "SELECT * FROM insegnamento
+            WHERE corso_laurea = $1 and codice = $2 and responsabile = $3;";
+        $sql_insert = "INSERT INTO appello (corso_laurea, codice, data) VALUES ($1, $2, $3);";
+
+        $db = open_pg_connection();
+        pg_query($db, $path);
+
+        $result_check = pg_prepare($db, "teaching_check", $sql_check);
+        $result_check = pg_execute($db, "teaching_check", $params_check);
+
+        if($result_check) {
+            $row = pg_fetch_assoc($result_check);
+            if(!$row) {
+                $error_msg = 'Insegnamento non gestito dal professore';
+            } else {
+                $params_insert = array($corso, $codice, $data);
+                
+                $result_insert = pg_prepare($db, "appeal_insert", $sql_insert);
+                $result_insert = pg_execute($db, "appeal_insert", $params_insert);
+
+                if(!$result_insert) 
+                    $error_msg = pg_last_error($db);
+            }
+        }
+
+        close_pg_connection($db);
+        return $error_msg;
+    }
+
+    function get_teaching_appeals($corso, $codice) {
+        $dates = array();
+        $path = "SET search_path=uni;";
+        $params = array($corso, $codice);
+        $sql = "SELECT data FROM appello WHERE corso_laurea = $1 and codice = $2;";
+
+        $db = open_pg_connection();
+        pg_query($db, $path);
+
+        $result = pg_prepare($db, "date_appello", $sql);
+        $result = pg_execute($db, "date_appello", $params);
+
+        if($result) {
+            $dates = pg_fetch_all_columns($result);
+        }
+
+        close_pg_connection($db);
+        return $dates;
+    }
 ?>
