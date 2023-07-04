@@ -109,7 +109,7 @@
     }
 
     function get_session($course) {
-        $current_date = "2023-07-05";
+        $current_date = "2023-06-15";
         $path = "set search_path=uni;";
         $params = array($current_date, $course);
         $session = array();
@@ -130,7 +130,7 @@
                 $codice = $row['codice'];
                 $data = $row['data'];
 
-                array_push($session, array($corso, $name, $data, $codice));
+                array_push($session, array($corso, $name, $codice, $data));
             }
         }
 
@@ -162,7 +162,7 @@
     function get_student_exam_subscriptions($matricola) {
         $path = "SET search_path=uni;";
         $params = array($matricola);
-        $sql = "SELECT s.corso_laurea, i.nome, s.data
+        $sql = "SELECT s.corso_laurea, i.nome, s.codice, s.data
             FROM sostiene s INNER JOIN insegnamento i ON s.corso_laurea = i.corso_laurea AND s.codice = i.codice
             WHERE s.studente = $1 AND voto IS NULL;";
         $exam_subscriptions = array();
@@ -177,9 +177,10 @@
             while($row = pg_fetch_assoc($result)) {
                 $corso = $row['corso_laurea'];
                 $nome = $row['nome'];
+                $codice = $row['codice'];
                 $data = $row['data'];
 
-                array_push($exam_subscriptions, array($corso, $nome, $data));
+                array_push($exam_subscriptions, array($corso, $nome, $codice, $data));
             }
         }
 

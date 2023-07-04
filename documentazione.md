@@ -126,7 +126,7 @@ create table appello (
 	codice char(3),
 	data date,
 	primary key(corso_laurea, codice, data),
-	foreign key(corso_laurea, cocide) references insegnamento (corso_laurea, codice)
+	foreign key(corso_laurea, cocide, data) references appello (corso_laurea, codice)
 );
 
 create table sostiene (

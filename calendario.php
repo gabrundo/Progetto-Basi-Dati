@@ -30,7 +30,6 @@
     if(isset($_POST) && isset($_POST['corso']) && isset($_POST['codice']) && isset($_POST['data'])) {
         $error_msg = add_date_appeal($logged, $_POST['corso'], $_POST['codice'], $_POST['data']);
         $added = true;
-        //aggiornamento del calcolo dell'appello inserito
     }
 ?>
 

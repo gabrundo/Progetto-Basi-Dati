@@ -160,4 +160,6 @@
         close_pg_connection($db);
         return $dates;
     }
+
+    //select s.*, i.responsabile from sostiene s inner join insegnamento i on s.corso_laurea = i.corso_laurea and s.codice = i.codice where voto is null;
 ?>

@@ -22,14 +22,20 @@
         $number = $student[0];
         $course = $student[3];
         $session = get_session($course);
-        $subscriptions = get_student_exam_subscriptions($number);
-
-
+        
         if(isset($_POST) && isset($_POST['corso']) && isset($_POST['codice']) && isset($_POST['data'])) {
-            $error_msg = exam_subscription($number, $_POST['corso'], $_POST['codice'], $_POST['data']);
-            $subscribed = true;
-            $subscriptions = get_student_exam_subscriptions($number);
+            $i = 0;
+            foreach($session as $values) {
+                if($_POST['button'] == $i) {
+                    $error_msg = exam_subscription($number, $values[0], $values[2], $values[3]);
+                    $subscribed = true;
+                    break;
+                }
+                $i = $i + 1;
+            }
         }
+
+        $subscriptions = get_student_exam_subscriptions($number);
     }
 
     if(isset($_GET) && isset($_GET['log']) && $_GET['log'] == 'del') {
@@ -83,6 +89,7 @@
                     <thead>
                         <th class="col">Corso di laurea</th>
                         <th class="col">Nome dell'insegnamento</th>
+                        <th class="col">Codice dell'insegnamento</th>
                         <th class="col">Data appello d'esame</th>
                     </thead>
                     <tbody>
@@ -91,6 +98,7 @@
                                 <td><?php echo $s[0]; ?></td>
                                 <td><?php echo $s[1]; ?></td>
                                 <td><?php echo $s[2]; ?></td>
+                                <td><?php echo $s[3]; ?></td>
                             </tr>
                         <?php } ?>
                     </tbody>
@@ -109,30 +117,39 @@
                                 <tr>
                                     <th class="col">Corso di laurea</th>
                                     <th class="col">Nome dell'insegnamento</th>
+                                    <th class="col">Codice dell'insegnamento</th>
                                     <th class="col">Data dell'appello</th>
                                     <th class="col">Selezione appello</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach($session as $values) {?>
+                                <?php 
+                                    $i = 0;
+                                    foreach($session as $values) {
+                                ?>
                                     <tr>
                                         <td>
                                             <input type="hidden" name="corso" value="<?php echo $values[0];?>">
                                             <?php echo $values[0]; ?>
                                         </td>
                                         <td>
-                                            <input type="hidden" name="codice" value="<?php echo $values[3];?>">
                                             <?php echo $values[1]; ?>
                                         </td>
                                         <td>
-                                            <input type="hidden" name="data" value="<?php echo $values[2];?>">
+                                            <input type="hidden" name="codice" value="<?php echo $values[2];?>">
                                             <?php echo $values[2]; ?>
                                         </td>
                                         <td>
-                                            <button type="submit" class="btn btn-primary">Iscrizione</button>
+                                            <input type="hidden" name="data" value="<?php echo $values[3];?>">
+                                            <?php echo $values[3]; ?>
+                                        </td>
+                                        <td>
+                                            <button type="submit" class="btn btn-primary" name="button" value="<?php echo $i ?>">Iscrizione</button>
                                         </td>
                                     </tr>
-                                <?php } ?>
+                                <?php
+                                    $i++; 
+                                    } ?>
                             </tbody>
                         </table>
                     </form>
