@@ -191,8 +191,8 @@ for each row execute function numero_insegnamenti_docente();
 
 ### Controllo anno insegnamenti rispetto alla sua tipologia
 Come richiesto dalla vincoli extra schema del modello relazionale l'anno di un insegnamento deve rispettare le restrizioni richieste dalla tipologia del corso di laurea.
-L'attributo `anno` di un insegnamento appartiene ad $\{1, 2, 3 \}$ se `tipologia` = _triennale_.
-Invece `anno` appartiene ad $\{1, 2 \}$ se `tipologia` = _magistrale_.
+L'attributo `anno` di un insegnamento appartiene ad $\{1, 2, 3 \}$ se `tipologia` = _Triennale_.
+Invece `anno` appartiene ad $\{1, 2 \}$ se `tipologia` = _Magistrale_.
 
 ```sql
 create or replace function anno_insegnamento() returns trigger as $$
@@ -203,22 +203,20 @@ create or replace function anno_insegnamento() returns trigger as $$
 		from corso_laurea
 		where nome = new.corso_laurea;
 
-		if tipo = '%triennale%' then
+		if tipo = 'Triennale' then
 				if not (new.anno = '1' or new.anno = '2' or new.anno = '3') then
 						raise exception 'Inserimento del insegnamento % non valido!', new.nome;
 						return null;
 				end if;
-		elsif tipo = '%magistrale%' then
+		elsif tipo = 'Magistrale' then
 				if not (new.anno = '1' or new.anno = '2') then
 						raise exception 'Inserimento del insegnamento % non valido!', new.nome;
 						return null;
 				end if;
-		else
-				raise exception 'Inserimento del insegnamento % non valido!', new.nome;
-				return null;
 		end if;
 		return new;
 	end;
+
 $$ language 'plpgsql';
 
 create trigger gestione_anni_insegnamento 

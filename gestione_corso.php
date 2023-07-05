@@ -5,14 +5,36 @@
 
 	session_start();
 
+	$added = false;
     $error_msg = "";
     $logged = null;
     $logout_link = $_SERVER['PHP_SELF']."?log=del";
+	$tipologia = null;
 	$segretary = array();
 
     if(isset($_SESSION['email'])) {
 		$logged = $_SESSION['email'];
 		$segretary = get_segretary_information($logged);
+
+		if(isset($_POST)) {
+			if(isset($_POST['cbutton'])) {
+				switch ($_POST['ctipo']) {
+					case "tr":
+						$tipologia = 'Triennale';
+						break;
+					case "mg":
+						$tipologia = 'Magistrale';
+						break;
+				}
+				$error_msg = insert_new_course($_POST['cnome'], $tipologia, $segretary[2]);
+				$added = true;
+			} else if(isset($_POST['ibutton'])) {
+				$error_msg = insert_new_teaching($_POST['icorso'], substr($_POST['icodice'], 0, 3), $_POST['inome'], $_POST['ianno'], $_POST['idesc'], $_POST['iresp']);
+				$added = true;
+			} else {
+				$error_msg = "Aggiornamento corso di laurea non riuscito";
+			}
+		}
 	}
 
     if(isset($_GET) && isset($_GET['log']) && $_GET['log'] == 'del') {
@@ -44,7 +66,6 @@
 			<div class="navbar-nav">
 				<a class="nav-link active" aria-current="page" href="segretario.php">Home</a>
 				<a class="nav-link" href="gestione_utenti.php">Gestione utenti</a>
-				<a class="nav-link" href="gestione_corso.php">Cancellazione studente</a>
 			</div>
 			</div>
 		</div>
@@ -59,8 +80,76 @@
 					<a href="<?php echo $logout_link;?>">qui</a>
 				</p>
 			</div>
-			
+			<div class="container mt-5">
+				<h3 class="text-center">Form per gestione corso e insegnamento</h3>
+				<div class="row">
+					<div class="col border mt-3">
+						<h4 class="text-center">Inserimento di un nuovo corso di laurea</h4>
+						<form action="" method="post">
+							<div class="mb-3 mx-auto">
+								<label for="cnome" class="form-label">Nome del corso di laurea</label>
+								<input type="text" name="cnome" class="form-control">
+							</div>
+							<div class="mb-3 mx-auto">
+								<label for="ctipo" class="form-label">Tipologia del corso di laurea</label>
+								<select name="ctipo" class="form-select" aria-label="Selezione tipoligia corso">
+									<option value="tr">Triennale</option>
+									<option value="mg">Magistrale</option>
+								</select>
+							</div>
+							<div class="mb-3 mx-auto">
+								<button type="submit" class="btn btn-primary" name="cbutton">Aggiungi nuovo corso</button>
+							</div>
+						</form>
+					</div>
+					<div class="col border mt-3">
+						<h4 class="text-center">Inserimento di un nuovo insegnamento</h4>
+						<form action="" method="post">
+							<div class="mb-3 mx-auto">
+								<label for="icorso" class="form-label">Corso di laura dell'insegnamento</label>
+								<input type="text" name="icorso" class="form-control">
+							</div>
+							<div class="mb-3 mx-auto">
+								<label for="icodice" class="form-label">Codice identificativo dell'insegnamento</label>
+								<input type="text" name="icodice" class="form-control">
+							</div>
+							<div class="mb-3 mx-auto">
+								<label for="inome" class="form-label">Nome dell'insegnamento</label>
+								<input type="text" name="inome" class="form-control">
+							</div>
+							<div class="mb-3 mx-auto">
+								<label for="ianno" class="form-label">Anno dell'insegnamento</label>
+								<input type="text" name="ianno" class="form-control">
+							</div>
+							<div class="mb-3 mx-auto">
+								<label for="idesc" class="form-label">Descrizione dell'insegnamento</label>
+								<input type="text" name="idesc" class="form-control">
+							</div>
+							<div class="mb-3 mx-auto">
+								<label for="iresp" class="form-label">Docente responsabile dell'insegnamento</label>
+								<input type="text" name="iresp" class="form-control">
+							</div>
+							<div class="mb-3 mx-auto">
+								<button type="submit" class="btn btn-primary" name="ibutton">Aggiungi nuovo insegnamento</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
 		<?php } ?>
+		<div class="container mt-5">
+			<?php if($added) { ?>
+				<?php if(empty($error_msg)) {?>
+					<div class="alert alert-success text-center border" role="alert">
+						<p><?php echo("Informazioni sul corso di laurea registrate correttamente");?></p>
+					</div>
+				<?php } else { ?>
+					<div class="alert alert-warning mt-5 text-center" role="alert">
+						<p><?php echo $error_msg; ?></p>
+					</div>
+				<?php } ?>
+			<?php } ?>
+		</div>
 	</div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
 </body>

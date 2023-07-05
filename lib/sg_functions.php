@@ -94,7 +94,7 @@
         $result = pg_execute($db, "insert_student", $params);
 
         if(!$result) {
-            $error_msg = "Inserimento della nuovo non valido";
+            $error_msg = "Inserimento della nuovo studente non valido";
         }
 
         close_pg_connection($db);
@@ -116,7 +116,7 @@
         $result = pg_execute($db, "insert_teacher", $params);
 
         if(!$result) {
-            $error_msg = "Inserimento della nuovo non valido";
+            $error_msg = "Inserimento della nuovo docente non valido";
         }
 
         close_pg_connection($db);
@@ -139,6 +139,51 @@
 
         if(!$result) {
             $error_msg = "Cancellazione dello studente non effettuata";
+        }
+
+        close_pg_connection($db);
+        return $error_msg;
+    }
+
+    function insert_new_course($nome, $tipologia, $facoltà) {
+        $error_msg = '';
+        $path = "SET search_path=uni;";
+        $params = array(
+            $nome, $tipologia, $facoltà
+        );
+        $sql = "INSERT INTO corso_laurea (nome, tipologia, segreteria) VALUES ($1, $2, $3);";
+
+        $db = open_pg_connection();
+        pg_query($db, $path);
+
+        $result = pg_prepare($db, "insert_course", $sql);
+        $result = pg_execute($db, "insert_course", $params);
+
+        if(!$result) {
+            $error_msg = "Inserimento del corso non effettuata";
+        }
+
+        close_pg_connection($db);
+        return $error_msg;
+    }
+
+    function insert_new_teaching($corso, $codice, $nome, $anno, $descrizione, $responsabile) {
+        $error_msg = '';
+        $path = "SET search_path=uni;";
+        $params = array(
+            $corso, $codice, $nome, $anno, $descrizione, $responsabile
+        );
+        $sql = "INSERT INTO insegnamento (corso_laurea, codice, nome, anno, descrizione, responsabile) 
+            VALUES ($1, $2, $3, $4, $5, $6);";
+
+        $db = open_pg_connection();
+        pg_query($db, $path);
+
+        $result = pg_prepare($db, "insert_teaching", $sql);
+        $result = pg_execute($db, "insert_teaching", $params);
+
+        if(!$result) {
+            $error_msg = pg_last_error($db);
         }
 
         close_pg_connection($db);
