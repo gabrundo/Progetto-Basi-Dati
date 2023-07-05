@@ -161,5 +161,57 @@
         return $dates;
     }
 
-    //select s.*, i.responsabile from sostiene s inner join insegnamento i on s.corso_laurea = i.corso_laurea and s.codice = i.codice where voto is null;
+    function get_teaching_to_evalueate($email) {
+        $path = "SET search_path=uni;";
+        $params = array($email);
+        $sql = "SELECT s.studente, s.corso_laurea, s.codice, s.data
+            FROM sostiene s INNER JOIN insegnamento i ON s.corso_laurea = i.corso_laurea AND s.codice = i.codice
+            WHERE voto IS NULL AND i.responsabile = $1;";
+        $to_evalueate = array();
+
+        $db = open_pg_connection();
+        pg_query($db, $path);
+
+        $result = pg_prepare($db, "get_teachings_to_value", $sql);
+        $result = pg_execute($db, "get_teachings_to_value", $params);
+
+        if($result) {
+            while($row = pg_fetch_assoc($result)) {
+                $studente = $row['studente'];                    
+                $corso = $row['corso_laurea'];
+                $codice = $row['codice'];
+                $data = $row['data'];
+
+                array_push($to_evalueate, array($studente, $corso, $codice, $data));
+            }
+        }
+
+        close_pg_connection($db);
+        return $to_evalueate;
+    }
+
+    function update_teaching_value($studente, $corso, $codice, $data, $voto) {
+        $error_msg = '';
+        $path = "SET search_path=uni;";
+        
+        $params = array($voto, $studente, $corso, $codice, $data);
+        $sql = "UPDATE sostiene SET voto = $1
+            WHERE studente = $2 AND corso_laurea = $3 AND codice = $4 AND data = $5;";
+
+        $db = open_pg_connection();
+        pg_query($db, $path);
+
+        $result = pg_prepare($db, "evaluate", $sql);
+        $result = pg_execute($db, "evaluate", $params);
+
+        if($result) {
+            $error_msg = '';
+        } else {
+            $error_msg = 'Registrazione del voto del appello non riuscito';
+        }
+
+        close_pg_connection($db);
+        
+        return $error_msg;
+    }
 ?>
