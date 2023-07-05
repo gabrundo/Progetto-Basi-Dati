@@ -78,4 +78,48 @@
         close_pg_connection($db);
         return $result;
     }
+
+    function insert_new_student($matricola, $email, $password, $nome, $cognome, $corso_laurea) {
+        $error_msg = '';
+        $path = "SET search_path=uni;";
+        $params = array(
+            $matricola, $email, md5($password), $nome, $cognome, $corso_laurea
+        );
+        $sql = "INSERT INTO studente (matricola, email, password, nome, cognome, corso_laurea) values ($1, $2, $3, $4, $5, $6);";
+
+        $db = open_pg_connection();
+        pg_query($db, $path);
+
+        $result = pg_prepare($db, "insert_student", $sql);
+        $result = pg_execute($db, "insert_student", $params);
+
+        if(!$result) {
+            $error_msg = "Inserimento della nuovo non valido";
+        }
+
+        close_pg_connection($db);
+        return $error_msg;
+    }
+
+    function insert_new_teacher($email, $password, $nome, $cognome) {
+        $error_msg = '';
+        $path = "SET search_path=uni;";
+        $params = array(
+            $email, md5($password), $nome, $cognome
+        );
+        $sql = "INSERT INTO docente (email, password, nome, cognome) values ($1, $2, $3, $4);";
+
+        $db = open_pg_connection();
+        pg_query($db, $path);
+
+        $result = pg_prepare($db, "insert_teacher", $sql);
+        $result = pg_execute($db, "insert_teacher", $params);
+
+        if(!$result) {
+            $error_msg = "Inserimento della nuovo non valido";
+        }
+
+        close_pg_connection($db);
+        return $error_msg;
+    }
 ?>

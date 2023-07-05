@@ -54,7 +54,7 @@
 			<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
 			<div class="navbar-nav">
 				<a class="nav-link active" aria-current="page" href="segretario.php">Home</a>
-				<a class="nav-link" href="#">#</a>
+				<a class="nav-link" href="inserimento_utenti.php">Inserimento utenti</a>
 			</div>
 			</div>
 		</div>
