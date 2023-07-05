@@ -54,7 +54,7 @@ Traduzione delle entità con identificatore esterno:
 
 **insegnamento**(<u>corso_laurea, codice</u>, nome, anno, descrizione, _responsabile_*)
 
-**appello**(<u>corso_laurea, codice, data</u>)
+**appello**(_<u>corso_laurea, codice, data</u>_)
 
 Traduzione delle associazioni molti a molti:
 
@@ -74,81 +74,7 @@ Oltre alle dipendenze funzionali banali ovvero quelle che ogni attributo ha con 
 
 ## Progettazione fisica
 Procedo ora a realizzare lo schema fisico da quello logico utilizzando i comandi SQL di DDL, data definition language.
-
-```sql
-create table docente (
-	email varchar primary key,
-	password varchar not null,
-	nome varchar(50) not null,
-	cognome varchar(50) not null
-);
-
-create table segreteria (
-	indirizzo varchar primary key
-);
-
-create table segretario (
-	email varchar primary key,
-	password varchar not null,
-	nome varchar(50) not null,
-	cognome varchar(50) not null,
-	segreteria varchar,
-	foreign key (segreteria) references segreteria (indirizzo) on update cascade on delete no action
-);
-
-create table corso_laurea (
-	nome varchar primary key,
-	tipologia char(10) not null,
-	segreteria varchar references segreteria (indirizzo) on update cascade on delete no action
-);
-
-create table studente (
-	matricola char(6) primary key,
-	email varchar not null unique,
-	password varchar not null,
-	nome varchar(50) not null,
-	cognome varchar(50) not null,
-	corso_laurea varchar references corso_laurea (nome) on update cascade on delete no action
-);
-
-create table insegnamento (
-	corso_laurea varchar,
-	codice char(3),
-	nome varchar not null,
-	anno char(1) not null,
-	descrizione text not null,
-	responsabile varchar references docente (email) on update cascade on delete no action,
-	primary key(corso_laurea, codice)
-);
-
-create table appello (
-	corso_laurea varchar,
-	codice char(3),
-	data date,
-	primary key(corso_laurea, codice, data),
-	foreign key(corso_laurea, cocide, data) references insegnamento (corso_laurea, codice)
-);
-
-create table sostiene (
-	studente char(6),
-	corso_laurea varchar,
-	codice char(3),
-	data date,
-	voto smallint,
-	primary key(studente, corso_laurea, codice, data),
-	foreign key(corso_laurea, cocide) references insegnamento (corso_laurea, codice)
-);
-
-create table propedeuticita (
-	corso_is varchar,
-	codice_is char(3),
-	corso_has varchar,
-	codice_has char(3),
-	primary key(codice_is, corso_is, corso_has, codice_has),
-	foreign key (corso_is, codice_is) references insegnamento (corso_laurea, codice),
-	foreign key (corso_has, codice_has) references insegnamento (corso_laurea, codice)
-);
-```
+Il codice SQL si può trovare nel file `dump_uni.sql` all'interno della cartella del progetto.
 
 ### Politche di reazione di integrità referenziale
 Per il vincolo di integrità referenziale sulla tabella studente dal momento che è necessario gestire la cancellazione di studenti in tabelle di storico quindi non è possibile applicare politiche diverse rispetto a quella `no action`.
@@ -216,7 +142,6 @@ create or replace function anno_insegnamento() returns trigger as $$
 		end if;
 		return new;
 	end;
-
 $$ language 'plpgsql';
 
 create trigger gestione_anni_insegnamento 
@@ -477,3 +402,23 @@ Ho fatto un eccezzione concatenando il nome della tabella al resto della query p
 	$result = pg_prepare($db, "check", $sql);
 	$result = pg_execute($db, "check", $params);
 ```
+
+## Prove di funzionamento e manuale utente
+Per accedere all'applicazione web è necessario fornire le credenziali di accesso e la tipologia di utente nell'apposito form nella pagina principale dell'applicazione web.
+
+![Pagina di login](./img/login.png)
+
+Una volta effettuato il login è presentata una pagina con una barra di navigazione che offre le principali funionalità legate alla tipologia di utente e una breve descrizioni delle principali informazione legate al utente come nome e cognome.
+Inoltre in questa pagina per tutte utenze è possibile cambiare la propria password di accesso inserendo la precedente e quella per il nuovo avvesso.
+Infine sempre in questa pagina è possibile effettuare il logout dall'applicazione cliccano sul link evidenziato.
+
+![Funzionalità utente](./img/funzionalita_studente.png)
+
+È possibile dalla pagina principale di un utente usufruire delle principali funzionalità legate ad esso cliccando sulla barra di navigazione
+per essere reindirizzato nella pagina che presenta le funzionalità richieste.
+Per esempio cliccando tra sulla funzionalità **Iscrizione esami** nella barra di navigazione dello studente è permesso allo studente di iscriversi agli esami possibili tramite la pressione di un bottone.
+Dopo la pressione di esso sarà mostrato allo studente in una tabella tutti gli appelli a cui esso è iscritto.
+
+![Iscrizione esami](./img/iscrizione_esami.png)
+
+In modo analogo e intuitivo guidato da etichette e titoli delle pagine è possibile usufruire delle funzionaltià dell'applicazione per le diverse utenze.
