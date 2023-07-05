@@ -22,6 +22,8 @@
             } else if(isset($_POST['dbutton'])) {
                 $error_msg = insert_new_teacher($_POST['demail'], $_POST['dpsw'], $_POST['dnome'], $_POST['dcognome']);
                 $added = true;
+            } else if(isset($_POST['delbutton'])) {
+                $error_msg = delete_student($_POST['delmatricola']);
             } else {
                 $error_msg = "Inserimento dell'utente non riuscito";
             }
@@ -56,13 +58,13 @@
 			<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
 			<div class="navbar-nav">
 				<a class="nav-link active" aria-current="page" href="segretario.php">Home</a>
-				<a class="nav-link" href="#">Inserimento nuovi utenti</a>
+				<a class="nav-link" href="gestione_corso.php">Gestione corso di laurea</a>
 			</div>
 			</div>
 		</div>
 	</nav>
 	<div class="container-xl mt-5 border-bottom">
-		<h1 class="pb-2 border-bottom text-center">Pagina principale del segretario</h1>
+		<h1 class="pb-2 border-bottom text-center">Gestione utenti</h1>
 		<?php if(isset($logged)) { ?>
 			<div class="container mt-5">
 				<div class="alert alert-success text-center border" role="alert">
@@ -72,62 +74,74 @@
 				</p>
 			</div>
 			<div class="container mt-5">
+                <h3 class="text-center">Form gestione utenti</h3>
+                <p class="text-center">Completare i moduli per gestire gli utenti</p>
 				<div class="row">
-                    <div class="col">
+                    <div class="col border mt-3">
                         <h4 class="text-center">Inserimento nuovo studente</h4>
                         <form method="post">
-                            <div class="mb-3 w-75 mx-auto">
+                            <div class="mb-3 mx-auto">
                                 <label for="" class="form-label">Matricola studente</label>
                                 <input type="text" name="smatricola" class="form-control">
                             </div>
-                            <div class="mb-3 w-75 mx-auto">
+                            <div class="mb-3 mx-auto">
                                 <label for="semail" class="form-label">Email studente</label>
                                 <input type="text" name="semail" class="form-control">
                             </div>
-                            <div class="mb-3 w-75 mx-auto">
+                            <div class="mb-3 mx-auto">
                                 <label for="" class="form-label">Password studente</label>
                                 <input type="password" name="spsw" class="form-control">
                             </div>
-                            <div class="mb-3 w-75 mx-auto">
+                            <div class="mb-3 mx-auto">
                                 <label for="snome" class="form-label">Nome studente</label>
                                 <input type="text" name="snome" class="form-control">
                             </div>
-                            <div class="mb-3 w-75 mx-auto">
+                            <div class="mb-3 mx-auto">
                                 <label for="scognome" class="form-label">Cognome studente</label>
                                 <input type="text" name="scognome" class="form-control">
                             </div>
-                            <div class="mb-3 w-75 mx-auto">
+                            <div class="mb-3 mx-auto">
                                 <label for="scorso" class="form-label">Corso di laurea studente</label>
                                 <input type="text" name="scorso" class="form-control">
                             </div>
-                            <div class="mb-3 w-75 mx-auto text-center">
+                            <div class="mb-3 mx-auto text-center">
                                 <button type="submit" class="btn btn-primary" name="sbutton">Registra nuovo studente</button>
                             </div>
                         </form>
                     </div>
-                    <div class="col">
+                    <div class="col border mt-3">
                         <h4 class="text-center">Inserimento nuovo docente</h4>
                         <form method="post">
-                            <div class="mb-3 w-75 mx-auto">
+                            <div class="mb-3 mx-auto">
                                 <label for="demail" class="form-label">Email docente</label>
                                 <input type="text" name="demail" class="form-control">
                             </div>
-                            <div class="mb-3 w-75 mx-auto">
+                            <div class="mb-3 mx-auto">
                                 <label for="dpsw" class="form-label">Password docente</label>
                                 <input type="password" name="dpsw" class="form-control">
                             </div>
-                            <div class="mb-3 w-75 mx-auto">
+                            <div class="mb-3 mx-auto">
                                 <label for="dnome" class="form-label">Nome docente</label>
                                 <input type="text" name="dnome" class="form-control">
                             </div>
-                            <div class="mb-3 w-75 mx-auto">
+                            <div class="mb-3 mx-auto">
                                 <label for="dcognome" class="form-label">Cognome docente</label>
                                 <input type="text" name="dcognome" class="form-control">
                             </div>
-                            <div class="mb-3 w-75 mx-auto text-center">
+                            <div class="mb-3 mx-auto text-center">
                                 <button type="submit" class="btn btn-primary" name="dbutton">Registra nuovo docente</button>
                             </div>
                         </form>
+                    </div>
+                    <div class="col border mt-3">
+                        <h4 class="text-center">Cancellazione utente</h4>
+                        <div class="mb-3 mx-auto">
+                                <label for="delmatricola" class="form-label">Matricola utente da cancellare</label>
+                                <input type="text" name="delmatricola" class="form-control">
+                            </div>
+                            <div class="mb-3 mx-auto text-center">
+                                <button type="submit" class="btn btn-primary" name="delbutton">Conferma</button>
+                            </div>
                     </div>
                 </div>
 			</div>

@@ -122,4 +122,26 @@
         close_pg_connection($db);
         return $error_msg;
     }
+
+    function delete_student($matricola) {
+        $error_msg = '';
+        $path = "SET search_path=uni;";
+        $params = array(
+            $matricola
+        );
+        $sql = "DELETE FROM studente WHERE matricola = $1;";
+
+        $db = open_pg_connection();
+        pg_query($db, $path);
+
+        $result = pg_prepare($db, "delete_student", $sql);
+        $result = pg_execute($db, "delete_student", $params);
+
+        if(!$result) {
+            $error_msg = "Cancellazione dello studente non effettuata";
+        }
+
+        close_pg_connection($db);
+        return $error_msg;
+    }
 ?>

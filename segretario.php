@@ -54,7 +54,8 @@
 			<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
 			<div class="navbar-nav">
 				<a class="nav-link active" aria-current="page" href="segretario.php">Home</a>
-				<a class="nav-link" href="inserimento_utenti.php">Inserimento utenti</a>
+				<a class="nav-link" href="gestione_utenti.php">Gestione utenti</a>
+				<a class="nav-link" href="gestione_corso.php">Gestione corsi di laurea</a>
 			</div>
 			</div>
 		</div>
